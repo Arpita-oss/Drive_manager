@@ -15,7 +15,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch('https://drive-manager-backend.onrender.com/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -178,7 +178,7 @@ const Login = () => {
           transition={{ delay: 0.7, duration: 0.5 }}
         >
           Don't have an account?{' '}
-          <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-500">
+          <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
             Sign up
           </Link>
         </motion.div>

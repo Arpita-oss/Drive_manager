@@ -18,13 +18,31 @@ const FolderView = () => {
     const [imageToDelete, setImageToDelete] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [deleteError, setDeleteError] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filteredImages, setFilteredImages] = useState([]);
+
+    // New effect for filtering images based on search query
+    useEffect(() => {
+        if (images.length > 0) {
+            if (searchQuery.trim() === '') {
+                setFilteredImages(images);
+            } else {
+                const filtered = images.filter(image =>
+                    image.name.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+                setFilteredImages(filtered);
+            }
+        } else {
+            setFilteredImages([]);
+        }
+    }, [searchQuery, images]);
 
     // Function to fetch images
     const fetchImages = async () => {
         if (!parentId) return;
 
         try {
-            const response = await fetch(`http://localhost:5000/api/folders/images/${parentId}`, {
+            const response = await fetch(`https://drive-manager-backend.onrender.com/api/folders/images/${parentId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 }
@@ -51,7 +69,7 @@ const FolderView = () => {
         formData.append('name', e.target.imageName.value);
 
         try {
-            const response = await fetch(`http://localhost:5000/api/folders/upload-image/${parentId}`, {
+            const response = await fetch(`https://drive-manager-backend.onrender.com/api/folders/upload-image/${parentId}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -91,7 +109,7 @@ const FolderView = () => {
 
         try {
             const response = await fetch(
-                `http://localhost:5000/api/folders/delete-image/${imageToDelete._id}`,
+                `https://drive-manager-backend.onrender.com/api/folders/delete-image/${imageToDelete._id}`,
                 {
                     method: 'DELETE',
                     headers: {
@@ -120,18 +138,18 @@ const FolderView = () => {
         }
     }, [parentId, token]);
 
-   useEffect(() => {
-  if (images.length > 0) {
-    console.log('Fetched images:', images);
-    images.forEach(img => {
-      if (!img.url) {
-        console.error('Missing URL for image:', img);
-      } else {
-        console.log('Image URL:', img.url);
-      }
-    });
-  }
-}, [images]);
+    useEffect(() => {
+        if (images.length > 0) {
+            console.log('Fetched images:', images);
+            images.forEach(img => {
+                if (!img.url) {
+                    console.error('Missing URL for image:', img);
+                } else {
+                    console.log('Image URL:', img.url);
+                }
+            });
+        }
+    }, [images]);
 
     useEffect(() => {
         console.log('Current parentId:', parentId); // Debug log
@@ -176,7 +194,7 @@ const FolderView = () => {
         setError(null);
 
         try {
-            const response = await fetch(`http://localhost:5000/api/folders/${parentId}`, {
+            const response = await fetch(`https://drive-manager-backend.onrender.com/api/folders/${parentId}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -212,8 +230,8 @@ const FolderView = () => {
         try {
             // If no parentId, fetch root folders
             const url = parentId
-                ? `http://localhost:5000/api/folders/subfolders/${parentId}`
-                : `http://localhost:5000/api/folders`;
+                ? `https://drive-manager-backend.onrender.com/api/folders/subfolders/${parentId}`
+                : `https://drive-manager-backend.onrender.com/api/folders`;
 
             const response = await fetch(url, {
                 method: 'GET',
@@ -255,7 +273,7 @@ const FolderView = () => {
                 parentId: parentId || null  // Handle root folder case
             };
 
-            const response = await fetch('http://localhost:5000/api/folders/create-folder', {
+            const response = await fetch('https://drive-manager-backend.onrender.com/api/folders/create-folder', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -288,7 +306,7 @@ const FolderView = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Top Navigation */}
-            <nav className="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center">
+            <nav className="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center sticky top-0 z-10 shadow-sm">
                 <div className="flex items-center">
                     <Link to="/dashboard" className="flex items-center text-blue-500 mr-4">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -418,7 +436,7 @@ const FolderView = () => {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+                                className="fixed inset-0 backdrop-blur bg-opacity-50 z-50 flex items-center justify-center"
                             >
                                 <motion.div
                                     initial={{ scale: 0.9, opacity: 0 }}
@@ -485,7 +503,7 @@ const FolderView = () => {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+                                className="fixed inset-0 backdrop-blur-sm bg-opacity-50 z-50 flex items-center justify-center"
                             >
                                 <motion.div
                                     initial={{ scale: 0.9, opacity: 0 }}
@@ -526,46 +544,71 @@ const FolderView = () => {
                             </motion.div>
                         )}
                     </AnimatePresence>
-                    <div className="bg-white rounded-lg shadow-sm p-6 mt-8">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-medium text-gray-800">Images</h3>
-                            <button
-                                onClick={() => setShowUploadModal(true)}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                            >
-                                Upload Image
-                            </button>
+                    <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mt-8">
+                        {/* Header Section */}
+                        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mb-6">
+                            <h3 className="text-lg font-medium text-gray-800 whitespace-nowrap">Images</h3>
+
+                            {/* Search and Upload Button Container */}
+                            <div className="flex flex-col sm:flex-row w-full gap-4">
+                                <div className="relative flex-grow">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="Search images by name..."
+                                        className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => setShowUploadModal(true)}
+                                    className="w-full sm:w-auto px-4 sm:px-8 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
+                                >
+                                    Upload Image
+                                </button>
+                            </div>
                         </div>
 
-                        {images.length === 0 ? (
-                            <div className="text-center py-12 text-gray-500">
+                        {/* No Results Message */}
+                        {filteredImages.length === 0 && searchQuery !== '' ? (
+                            <div className="text-center py-8 sm:py-12 text-gray-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
-                                <p className="text-lg">No images yet</p>
-                                <p className="mt-1">Upload your first image to get started</p>
+                                <p className="text-lg">No images found</p>
+                                <p className="mt-1">No images match your search for "{searchQuery}"</p>
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="mt-4 text-blue-600 hover:text-blue-800 transition-colors"
+                                >
+                                    Clear search
+                                </button>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                {images.map(image => (
+                            /* Image Grid */
+                            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                                {filteredImages.map(image => (
                                     <motion.div
                                         key={image._id}
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         className="border border-gray-200 rounded-lg overflow-hidden group relative"
                                     >
-                                        <div className="aspect-w-1 aspect-h-1 bg-gray-100">
+                                        <div className="relative pt-[100%]">
                                             <img
                                                 src={image.url || 'https://via.placeholder.com/150'}
                                                 alt={image.name}
-                                                className="object-cover w-full h-full"
+                                                className="absolute top-0 left-0 w-full h-full object-cover"
                                                 loading="lazy"
                                                 onError={(e) => {
-                                                    console.error('Image load error for:', image);
                                                     e.target.src = 'https://via.placeholder.com/150';
                                                 }}
                                             />
-                                            
                                             <div className="absolute inset-0  bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200">
                                                 <button
                                                     onClick={() => setImageToDelete(image)}
@@ -577,9 +620,9 @@ const FolderView = () => {
                                                 </button>
                                             </div>
                                         </div>
-                                        <div className="p-4">
-                                            <h4 className="font-medium text-gray-800 truncate">{image.name}</h4>
-                                            <p className="text-sm text-gray-500 mt-1">
+                                        <div className="p-3 sm:p-4">
+                                            <h4 className="font-medium text-gray-800 truncate text-sm sm:text-base">{image.name}</h4>
+                                            <p className="text-xs sm:text-sm text-gray-500 mt-1">
                                                 {new Date(image.createdAt).toLocaleDateString()}
                                             </p>
                                         </div>

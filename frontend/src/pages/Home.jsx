@@ -48,7 +48,7 @@ const Home = () => {
               Login
             </motion.button>
           </Link>
-          <Link to="/signup">
+          <Link to="/register">
             <motion.button 
               className="px-8 py-3 bg-white text-blue-600 font-semibold rounded-full border-2 border-blue-600 shadow-lg shadow-blue-100/30 min-w-[140px]"
               whileHover={{ scale: 1.05, backgroundColor: "#f0f9ff" }}
